@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import get_settings
-from app.routers import calendar, health, refresh_runs, stocks, themes
+from app.routers import calendar, compat, health, refresh_runs, stocks, themes
 
 settings = get_settings()
 
@@ -25,6 +25,7 @@ app.include_router(stocks.router)
 app.include_router(themes.router)
 app.include_router(calendar.router)
 app.include_router(refresh_runs.router)
+app.include_router(compat.router)
 
 
 @app.get('/')
