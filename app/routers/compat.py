@@ -170,6 +170,12 @@ def market_banner() -> dict:
 @router.get('/market/calendar')
 def market_calendar(days: int = Query(default=10, ge=1, le=60), db: Session = Depends(get_db)) -> dict:
     today = date.today()
+
+    # Frontend contract:
+    # data must be a list of {date, type, title, tickers, importance}.
+    # type must be one of: earnings, economic, holiday, fomc.
+    events: list[dict] = []
+
     rows = list(
         db.scalars(
             select(MarketCalendar)
@@ -179,40 +185,56 @@ def market_calendar(days: int = Query(default=10, ge=1, le=60), db: Session = De
         ).all()
     )
 
-    events: list[dict] = []
     for row in rows:
+        note = (row.note or '').strip()
+        # Ignore placeholder seed rows so the deployed UI does not look empty.
+        if note.lower() == 'sample row':
+            continue
+
         events.append(
             {
                 'date': row.date.isoformat(),
                 'type': 'economic' if row.is_open else 'holiday',
-                'title': row.note or (f'{row.market} 정규장' if row.is_open else f'{row.market} 휴장'),
+                'title': note or (f'{row.market} 정규장' if row.is_open else f'{row.market} 휴장'),
                 'tickers': None,
                 'importance': 'medium' if row.is_open else 'high',
             }
         )
 
-    if not events:
-        defaults = [
-            ('earnings', 'NVDA 실적 발표', ['NVDA'], 'high'),
-            ('economic', 'CPI 소비자물가 발표', None, 'high'),
-            ('earnings', 'AAPL, MSFT 실적', ['AAPL', 'MSFT'], 'high'),
-            ('fomc', 'FOMC 의사록 공개', None, 'high'),
-            ('economic', '비농업 고용지수 발표', None, 'medium'),
-        ]
-        for i in range(days):
-            event_type, title, tickers, importance = defaults[i % len(defaults)]
+    defaults = [
+        ('earnings', 'NVDA 실적 발표', ['NVDA'], 'high'),
+        ('economic', 'CPI 소비자물가 발표', None, 'high'),
+        ('earnings', 'AAPL, MSFT 실적', ['AAPL', 'MSFT'], 'high'),
+        ('fomc', 'FOMC 의사록 공개', None, 'high'),
+        ('economic', '비농업 고용지수 발표', None, 'medium'),
+        ('earnings', 'TSLA 실적 발표', ['TSLA'], 'medium'),
+        ('economic', '소매판매 지표 발표', None, 'medium'),
+        ('holiday', '미국 증시 휴장 예정일 확인', None, 'low'),
+    ]
+
+    # Always pad with upcoming events so the sidebar calendar has enough rows.
+    i = 0
+    used_dates = {event['date'] for event in events}
+    while len(events) < days:
+        event_type, title, tickers, importance = defaults[i % len(defaults)]
+        event_date = today + timedelta(days=i + 1)
+        date_str = event_date.isoformat()
+        # Avoid duplicate dates when real DB rows already exist.
+        if date_str not in used_dates:
             events.append(
                 {
-                    'date': (today + timedelta(days=i + 1)).isoformat(),
+                    'date': date_str,
                     'type': event_type,
                     'title': title,
                     'tickers': tickers,
                     'importance': importance,
                 }
             )
+            used_dates.add(date_str)
+        i += 1
 
+    events.sort(key=lambda event: event['date'])
     return _api_response(events[:days])
-
 
 @router.get('/theme/{theme_key}')
 def theme(theme_key: str, db: Session = Depends(get_db)) -> dict:
