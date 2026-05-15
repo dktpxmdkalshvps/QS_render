@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: quant-backend
+    runtime: python
+    plan: free
+    buildCommand: ./build.sh
+    startCommand: ./start.sh
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: quant-postgres
+          property: connectionString
+      - key: CORS_ORIGINS
+        value: https://your-frontend.vercel.app,http://localhost:3000,http://localhost:5173
+      - key: WEB_CONCURRENCY
+        value: 2
+
+databases:
+  - name: quant-postgres
+    plan: free
+    databaseName: quantdb
+    user: quant_user
