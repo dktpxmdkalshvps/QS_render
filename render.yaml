@@ -3,8 +3,8 @@ services:
     name: quant-backend
     runtime: python
     plan: free
-    buildCommand: ./build.sh
-    startCommand: ./start.sh
+    buildCommand: bash build.sh
+    startCommand: bash start.sh
     envVars:
       - key: APP_ENV
         value: production
@@ -13,7 +13,7 @@ services:
           name: quant-postgres
           property: connectionString
       - key: CORS_ORIGINS
-        value: https://your-frontend.vercel.app,http://localhost:3000,http://localhost:5173
+        value: https://qscreen-red.vercel.app,http://localhost:3000,http://localhost:5173
       - key: WEB_CONCURRENCY
         value: 2
 
