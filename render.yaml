@@ -6,6 +6,8 @@ services:
     buildCommand: bash build.sh
     startCommand: bash start.sh
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
       - key: APP_ENV
         value: production
       - key: DATABASE_URL
