@@ -15,7 +15,7 @@ services:
           name: quant-postgres
           property: connectionString
       - key: CORS_ORIGINS
-        value: https://qs-front-psi.vercel.app,http://localhost:3000,http://localhost:5173
+        value: https://qs-front-psi.vercel.app,https://qsscreen.vercel.app,http://localhost:3000,http://localhost:5173
       - key: WEB_CONCURRENCY
         value: 2
 
